@@ -24,9 +24,9 @@ jobs:
     - name: Configure CMake
       run: |
         rm -rf build install
-        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/shared -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/static -DBUILD_SHARED_LIBS=FALSE -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/framework -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/framework -DCMAKE_FRAMEWORK=ON -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/framework -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/framework -DCMAKE_FRAMEWORK=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
 
     - name: Build CMake Shared
       working-directory: build/shared
@@ -79,8 +79,8 @@ jobs:
     - name: Configure CMake
       run: |
         rm -rf build install
-        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/shared -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/static -DBUILD_SHARED_LIBS=FALSE -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
 
     - name: Build CMake Shared
       working-directory: build/shared
@@ -123,7 +123,7 @@ jobs:
     - name: Configure CMake
       shell: cmd
       run: |
-        cmake -B build\msvc -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_WITH_TESTS=ON -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\msvc -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
+        cmake -B build\msvc -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\msvc "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
 
     - name: Build CMake
       working-directory: build/msvc
