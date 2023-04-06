@@ -1,0 +1,156 @@
+name: GitHub Builds
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NIX_COMPILE_FLAGS: -Wall -Wextra -pedantic -Werror
+  MSVC_COMPILE_FLAGS: /W4 /WX
+
+jobs:
+  macos-cmake:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+        path: src
+
+    - name: Install dependencies
+      run: brew install meson ninja
+
+    - name: Configure CMake
+      run: |
+        rm -rf build install
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/shared -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/static -DBUILD_SHARED_LIBS=FALSE -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/framework -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/framework -DCMAKE_FRAMEWORK=ON -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+
+    - name: Build CMake Shared
+      working-directory: build/shared
+      run: make install
+
+    - name: Build CMake Static
+      working-directory: build/static
+      run: make install
+
+    - name: Build CMake Framework
+      working-directory: build/framework
+      run: make install
+
+    - name: Check artifacts
+      uses: andstor/file-existence-action@v2
+      with:
+        files: "install/macos/shared/lib/libhidapi.dylib, \
+                install/macos/shared/include/hidapi/hidapi.h, \
+                install/macos/shared/include/hidapi/hidapi_darwin.h, \
+                install/macos/static/lib/libhidapi.a, \
+                install/macos/static/include/hidapi/hidapi.h, \
+                install/macos/static/include/hidapi/hidapi_darwin.h, \
+                install/macos/framework/lib/hidapi.framework/hidapi, \
+                install/macos/framework/lib/hidapi.framework/Headers/hidapi.h, \
+                install/macos/framework/lib/hidapi.framework/Headers/hidapi_darwin.h"
+        fail: true
+
+    - name: 'Upload binaries'
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos
+        path: |
+          install/*
+
+  ubuntu-cmake:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+        path: src
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install libudev-dev libusb-1.0-0-dev python3-pip ninja-build
+        sudo -H pip3 install meson
+
+    - name: Configure CMake
+      run: |
+        rm -rf build install
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/shared -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/static -DBUILD_SHARED_LIBS=FALSE -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+
+    - name: Build CMake Shared
+      working-directory: build/shared
+      run: make install
+
+    - name: Build CMake Static
+      working-directory: build/static
+      run: make install
+
+    - name: Check artifacts
+      uses: andstor/file-existence-action@v2
+      with:
+        files: "install/ubuntu/shared/lib/libhidapi-libusb.so, \
+                install/ubuntu/shared/lib/libhidapi-hidraw.so, \
+                install/ubuntu/shared/include/hidapi/hidapi.h, \
+                install/ubuntu/shared/include/hidapi/hidapi_libusb.h, \
+                install/ubuntu/static/lib/libhidapi-libusb.a, \
+                install/ubuntu/static/lib/libhidapi-hidraw.a, \
+                install/ubuntu/static/include/hidapi/hidapi.h, \
+                install/ubuntu/static/include/hidapi/hidapi_libusb.h"
+        fail: true
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: ubuntu
+        path: |
+          install/*
+
+  windows-cmake:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+        path: src
+
+    - name: Install dependencies
+      run: |
+        choco install ninja
+        pip3 install meson
+        refreshenv
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        cmake -B build\msvc -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_WITH_TESTS=ON -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\msvc -DHIDAPI_BUILD_HIDTEST=ON "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
+
+    - name: Build CMake
+      working-directory: build/msvc
+      run: cmake --build . --config RelWithDebInfo --target install
+
+    - name: Check artifacts
+      uses: andstor/file-existence-action@v2
+      with:
+        files: "install/msvc/lib/hidapi.lib, \
+                install/msvc/bin/hidapi.dll, \
+                install/msvc/include/hidapi/hidapi.h, \
+                install/msvc/include/hidapi/hidapi_winapi.h"
+        fail: true
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows
+        path: |
+          install/*
