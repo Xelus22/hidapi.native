@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+
+    <metadata>
+        <id>hidapi-native</id>
+        <version>0.14.0</version>
+        <title>hidapi native binaries</title>
+        <authors>QMK</authors>
+        <summary>Prebuilt hidapi library bundle.</summary>
+        <description>Prebuilt hidapi library bundle.</description>
+        <copyright>Copyright 2023</copyright>
+        <tags>native, Native, hidapi, libusb, hidraw</tags>
+    </metadata>
+
+    <files>
+        <file src="binaries/macos/shared/lib/libhidapi.dylib" target="runtimes/osx-x64/native" />
+        <file src="binaries/ubuntu/shared/lib/libhidapi-hidraw.so" target="runtimes/linux-x64/native/" />
+        <file src="binaries/windows/x86/lib/hidapi.lib" target="runtimes/win-x86/native/" />
+        <file src="binaries/windows/x86/bin/hidapi.dll" target="runtimes/win-x86/native/" />
+        <file src="binaries/windows/x64/lib/hidapi.lib" target="runtimes/win-x64/native/" />
+        <file src="binaries/windows/x64/bin/hidapi.dll" target="runtimes/win-x64/native/" />
+
+        <file src="hidapi-native.targets" target="build/netstandard1.0/hidapi-native.targets"/>
+        <file src="hidapi-native.props" target="build/netstandard1.0/hidapi-native.props"/>
+    </files>
+
+</package>

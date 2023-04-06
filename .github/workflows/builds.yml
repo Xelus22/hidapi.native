@@ -7,26 +7,27 @@ on:
   workflow_dispatch:
 
 env:
+  NUGET_NAMESPACE: tzarc
   NIX_COMPILE_FLAGS: -Wall -Wextra -pedantic -Werror
   MSVC_COMPILE_FLAGS: /W4 /WX
 
 jobs:
-  macos-cmake:
+  macos-build:
 
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-        path: src
+    - name: Get hidapi
+      run: |
+        mkdir src
+        git clone https://github.com/libusb/hidapi.git src/hidapi
 
     - name: Configure CMake
       run: |
         rm -rf build install
-        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/framework -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/macos/framework -DCMAKE_FRAMEWORK=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/framework -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/framework -DCMAKE_FRAMEWORK=ON "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
 
     - name: Build CMake Shared
       working-directory: build/shared
@@ -43,15 +44,15 @@ jobs:
     - name: Check artifacts
       uses: andstor/file-existence-action@v2
       with:
-        files: "install/macos/shared/lib/libhidapi.dylib, \
-                install/macos/shared/include/hidapi/hidapi.h, \
-                install/macos/shared/include/hidapi/hidapi_darwin.h, \
-                install/macos/static/lib/libhidapi.a, \
-                install/macos/static/include/hidapi/hidapi.h, \
-                install/macos/static/include/hidapi/hidapi_darwin.h, \
-                install/macos/framework/lib/hidapi.framework/hidapi, \
-                install/macos/framework/lib/hidapi.framework/Headers/hidapi.h, \
-                install/macos/framework/lib/hidapi.framework/Headers/hidapi_darwin.h"
+        files: "install/shared/lib/libhidapi.dylib, \
+                install/shared/include/hidapi/hidapi.h, \
+                install/shared/include/hidapi/hidapi_darwin.h, \
+                install/static/lib/libhidapi.a, \
+                install/static/include/hidapi/hidapi.h, \
+                install/static/include/hidapi/hidapi_darwin.h, \
+                install/framework/lib/hidapi.framework/hidapi, \
+                install/framework/lib/hidapi.framework/Headers/hidapi.h, \
+                install/framework/lib/hidapi.framework/Headers/hidapi_darwin.h"
         fail: true
 
     - name: 'Upload binaries'
@@ -60,16 +61,22 @@ jobs:
         name: macos
         path: |
           install/*
+          !install/shared/lib/cmake
+          !install/shared/lib/pkgconfig
+          !install/static/lib/cmake
+          !install/static/lib/pkgconfig
+          !install/framework/lib/cmake
+          !install/framework/lib/pkgconfig
 
-  ubuntu-cmake:
+  ubuntu-build:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-        path: src
+    - name: Get hidapi
+      run: |
+        mkdir src
+        git clone https://github.com/libusb/hidapi.git src/hidapi
 
     - name: Install dependencies
       run: |
@@ -79,8 +86,8 @@ jobs:
     - name: Configure CMake
       run: |
         rm -rf build install
-        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
-        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/ubuntu/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/shared -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/shared "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
+        cmake -B build/static -S src/hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install/static -DBUILD_SHARED_LIBS=FALSE "-DCMAKE_C_FLAGS=${NIX_COMPILE_FLAGS}"
 
     - name: Build CMake Shared
       working-directory: build/shared
@@ -93,14 +100,14 @@ jobs:
     - name: Check artifacts
       uses: andstor/file-existence-action@v2
       with:
-        files: "install/ubuntu/shared/lib/libhidapi-libusb.so, \
-                install/ubuntu/shared/lib/libhidapi-hidraw.so, \
-                install/ubuntu/shared/include/hidapi/hidapi.h, \
-                install/ubuntu/shared/include/hidapi/hidapi_libusb.h, \
-                install/ubuntu/static/lib/libhidapi-libusb.a, \
-                install/ubuntu/static/lib/libhidapi-hidraw.a, \
-                install/ubuntu/static/include/hidapi/hidapi.h, \
-                install/ubuntu/static/include/hidapi/hidapi_libusb.h"
+        files: "install/shared/lib/libhidapi-libusb.so, \
+                install/shared/lib/libhidapi-hidraw.so, \
+                install/shared/include/hidapi/hidapi.h, \
+                install/shared/include/hidapi/hidapi_libusb.h, \
+                install/static/lib/libhidapi-libusb.a, \
+                install/static/lib/libhidapi-hidraw.a, \
+                install/static/include/hidapi/hidapi.h, \
+                install/static/include/hidapi/hidapi_libusb.h"
         fail: true
 
     - name: Upload binaries
@@ -109,33 +116,46 @@ jobs:
         name: ubuntu
         path: |
           install/*
+          !install/shared/lib/cmake
+          !install/shared/lib/pkgconfig
+          !install/static/lib/cmake
+          !install/static/lib/pkgconfig
 
-  windows-cmake:
+  windows-build:
 
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-        path: src
+    - name: Get hidapi
+      run: |
+        mkdir src
+        git clone https://github.com/libusb/hidapi.git src/hidapi
 
     - name: Configure CMake
       shell: cmd
       run: |
-        cmake -B build\msvc -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\msvc "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
+        cmake -G "Visual Studio 17 2022" -A Win32 -B build\msvc\x86 -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\x86 "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
+        cmake -G "Visual Studio 17 2022" -A x64 -B build\msvc\x64 -S src\hidapi -DCMAKE_BUILD_TYPE=RelWithDebInfo -DHIDAPI_BUILD_PP_DATA_DUMP=ON -DHIDAPI_ENABLE_ASAN=ON -DCMAKE_INSTALL_PREFIX=install\x64 "-DCMAKE_C_FLAGS=%MSVC_COMPILE_FLAGS%"
 
-    - name: Build CMake
-      working-directory: build/msvc
+    - name: Build CMake x86
+      working-directory: build/msvc/x86
+      run: cmake --build . --config RelWithDebInfo --target install
+
+    - name: Build CMake x64
+      working-directory: build/msvc/x64
       run: cmake --build . --config RelWithDebInfo --target install
 
     - name: Check artifacts
       uses: andstor/file-existence-action@v2
       with:
-        files: "install/msvc/lib/hidapi.lib, \
-                install/msvc/bin/hidapi.dll, \
-                install/msvc/include/hidapi/hidapi.h, \
-                install/msvc/include/hidapi/hidapi_winapi.h"
+        files: "install/x86/lib/hidapi.lib, \
+                install/x86/bin/hidapi.dll, \
+                install/x86/include/hidapi/hidapi.h, \
+                install/x86/include/hidapi/hidapi_winapi.h, \
+                install/x64/lib/hidapi.lib, \
+                install/x64/bin/hidapi.dll, \
+                install/x64/include/hidapi/hidapi.h, \
+                install/x64/include/hidapi/hidapi_winapi.h"
         fail: true
 
     - name: Upload binaries
@@ -144,3 +164,48 @@ jobs:
         name: windows
         path: |
           install/*
+          !install/x64/bin/pp_data_dump.exe
+          !install/x64/lib/cmake
+          !install/x64/lib/pkgconfig
+          !install/x86/bin/pp_data_dump.exe
+          !install/x86/lib/cmake
+          !install/x86/lib/pkgconfig
+
+  all-package:
+    runs-on: ubuntu-latest
+    needs: [macos-build, ubuntu-build, windows-build]
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+        source-url: https://nuget.pkg.github.com/${{ env.NUGET_NAMESPACE }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get the repo
+      uses: actions/checkout@v3
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: binaries
+
+    - name: Create NuGet package
+      run: |
+        nuget pack
+        dotnet nuget push *.nupkg --no-symbols true --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ env.NUGET_NAMESPACE }}/index.json
+
+    - name: Upload consolidated binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: combined
+        path: |
+          binaries/*
+
+    - name: Upload NuGet package
+      uses: actions/upload-artifact@v3
+      with:
+        name: nuget
+        path: |
+          *.nupkg
