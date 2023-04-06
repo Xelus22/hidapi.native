@@ -21,9 +21,6 @@ jobs:
         submodules: true
         path: src
 
-    - name: Install dependencies
-      run: brew install meson ninja
-
     - name: Configure CMake
       run: |
         rm -rf build install
@@ -77,8 +74,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install libudev-dev libusb-1.0-0-dev python3-pip ninja-build
-        sudo -H pip3 install meson
+        sudo apt install libudev-dev libusb-1.0-0-dev
 
     - name: Configure CMake
       run: |
@@ -123,12 +119,6 @@ jobs:
       with:
         submodules: true
         path: src
-
-    - name: Install dependencies
-      run: |
-        choco install ninja
-        pip3 install meson
-        refreshenv
 
     - name: Configure CMake
       shell: cmd
